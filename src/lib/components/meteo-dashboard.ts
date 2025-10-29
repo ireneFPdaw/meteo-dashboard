@@ -2,7 +2,6 @@ import { LitElement, css } from "lit";
 import uPlot from "uplot";
 import yaml from "js-yaml";
 
-/** Tipos del YAML */
 interface SeriesPoint {
   time: string;
   value: number;
@@ -20,14 +19,13 @@ interface MeteoYaml {
   potencia?: SerieYaml;
 }
 
-/** Bucket por minuto para agregación. */
 type Bucket = { t: number[]; e: number[] };
 
 export class MeteoDashboard extends LitElement {
-  static styles = css``; // usamos light DOM
+  static styles = css``;
   createRenderRoot() { return this; }
 
-  // ===== Refs UI =====
+
   private statusEl!: HTMLElement;
   private lastTempEl!: HTMLElement;
   private lastEnergyEl!: HTMLElement;
@@ -38,8 +36,6 @@ export class MeteoDashboard extends LitElement {
   private btnPlay: HTMLButtonElement | null = null;
   private toggleTempBtn!: HTMLButtonElement;
   private toggleEnergyBtn!: HTMLButtonElement;
-
-  // ===== Estado =====
   private timer: number | null = null;
   private secondTimer: number | null = null;
   private nextAt = 0;
@@ -58,8 +54,6 @@ export class MeteoDashboard extends LitElement {
   private themeObs: MutationObserver | null = null;
   private _onThemeLinkLoad?: () => void;
   private timeObs: MutationObserver | null = null;
-
-  // Últimos cambios
   private recentTemp: { time: string; value: number }[] = [];
   private recentEnergy: { time: string; value: number }[] = [];
   private recentTempEl!: HTMLUListElement;
@@ -69,36 +63,30 @@ export class MeteoDashboard extends LitElement {
   private showTemp = true;
   private showEnergy = true;
 
-  // ===== Ciclo de vida =====
   connectedCallback(): void {
     super.connectedCallback();
     this.cacheElements();
     this.wireToolbar();
     this.setupChart();
     this.loadFromPublic();
-
-    // Reaccionar a cambios de tema (reconstruir para aplicar ejes/grid)
     this._onThemeChanged = () => this.rebuildChartForTheme();
     window.addEventListener("theme-changed", this._onThemeChanged);
 
-    // Observa cambios en el <link id="theme"> para detectar cambio de tema
     const themeLink = document.querySelector('link#theme') as HTMLLinkElement | null;
     if (themeLink && !this.themeObs) {
       this._onThemeLinkLoad = () => this.rebuildChartForTheme();
       this.themeObs = new MutationObserver(() => {
-        // Espera a que cargue la hoja de estilos antes de leer las CSS vars
         if (this._onThemeLinkLoad) {
           themeLink.removeEventListener('load', this._onThemeLinkLoad);
           themeLink.addEventListener('load', this._onThemeLinkLoad, { once: true });
         } else {
-          // Fallback por si no existe handler
+
           setTimeout(() => this.refreshChartColors(), 0);
         }
       });
       this.themeObs.observe(themeLink, { attributes: true, attributeFilter: ['href'] });
     }
 
-    // Sincroniza el texto de estado con el tiempo actual mostrado
     if (!this.timeObs) {
       const updateFromTime = () => {
         const t = (this.currentTimeEl?.textContent || "").trim();
@@ -127,8 +115,7 @@ export class MeteoDashboard extends LitElement {
     this.pause();
   }
 
-/** Actualiza colores de series tomando las CSS vars del tema.
- *  Evita redraw si todavía no hay datos para no romper uPlot. */
+
 private refreshChartColors() {
   if (!this.plot) return;
 
@@ -140,7 +127,7 @@ private refreshChartColors() {
   const energyColor = css("--c-energy",  "#73e0c7");
   const energyFill  = css("--c-energy-a","rgba(115,224,199,.30)");
 
-  // Cambiamos colores sin tocar internals; typings varían → cast puntual a any
+
   (this.plot as any).setSeries(1, {
     stroke: tempColor,
     points: { show: true, size: 5, stroke: tempColor, fill: tempFill },
@@ -151,23 +138,23 @@ private refreshChartColors() {
     points: { show: true, size: 5, stroke: energyColor, fill: energyFill },
   } as any);
 
-  // 🔒 Solo repintamos si ya hay datos (x) para evitar el crash de uPlot
+
   const hasData = Array.isArray((this.plot as any).data?.[0]) && (this.plot as any).data[0].length > 0;
   if (hasData) this.plot.redraw();
 }
 
-// Reconstruye el gráfico para aplicar cambios de ejes/grid por tema
+
 private rebuildChartForTheme() {
   const hadPlot = !!this.plot;
   this.setupChart();
-  // Si ya había datos calculados, reponerlos
+
   if (hadPlot && this.perMinute.size > 0) {
     this.updateChart();
   }
 }
 
 
-  // ===== Elementos y eventos =====
+
   private cacheElements() {
     this.statusEl = this.querySelector("#status") as HTMLElement;
     this.lastTempEl = this.querySelector("#last-temp") as HTMLElement;
@@ -177,14 +164,14 @@ private rebuildChartForTheme() {
     this.currentTimeEl = this.querySelector("#current-time") as HTMLElement;
     this.nextInEl = this.querySelector("#next-in") as HTMLElement;
     this.btnPlay = this.querySelector("#btnPlay") as HTMLButtonElement | null;
-    this.toggleTempBtn = this.querySelector("#toggleTemp") as HTMLButtonElement;   // <-- fix
+    this.toggleTempBtn = this.querySelector("#toggleTemp") as HTMLButtonElement;
     this.toggleEnergyBtn = this.querySelector("#toggleEnergy") as HTMLButtonElement;
     this.recentTempEl = this.querySelector("#recent-temp") as HTMLUListElement;
     this.recentEnergyEl = this.querySelector("#recent-energy") as HTMLUListElement;
   }
 
   private wireToolbar() {
-    // Inicializa estado visual de los toggles
+
     this.toggleTempBtn?.setAttribute("aria-pressed", String(this.showTemp));
     this.toggleTempBtn?.setAttribute("title", this.showTemp ? "Ocultar temperatura" : "Mostrar temperatura");
     this.toggleEnergyBtn?.setAttribute("aria-pressed", String(this.showEnergy));
@@ -201,7 +188,6 @@ private rebuildChartForTheme() {
       this.toggleEnergyBtn.setAttribute("title", this.showEnergy ? "Ocultar energía" : "Mostrar energía");
       this.updateChart();
     });
-    // Accesibilidad: barra espaciadora = play/pausa (aunque no haya botón)
     this.addEventListener("keydown", (e: KeyboardEvent) => {
       if (e.code === "Space") {
         e.preventDefault();
@@ -210,7 +196,6 @@ private rebuildChartForTheme() {
     });
   }
 
-  // ===== Carga YAML =====
   private async loadFromPublic() {
     try {
       this.setStatus("Cargando /data.yml …");
@@ -237,15 +222,12 @@ private rebuildChartForTheme() {
         energy: energy ? norm(energy) : null,
       };
 
-      // Reset y primer pintado
       this.pointer = 0;
       this.perMinute.clear();
       this.updateChart();
       this.recentTemp = [];
       this.recentEnergy = [];
       this.renderRecent();
-
-      // Sincroniza con hora real y arranca timers
       this.syncPointerToNow();
       this.startAuto();
     } catch (err: any) {
@@ -253,8 +235,6 @@ private rebuildChartForTheme() {
       this.setStatus("Error cargando data.yml: " + err.message);
     }
   }
-
-  // ===== Reproducción =====
   private syncPointerToNow() {
     if (!this.data) return;
     const now = new Date();
@@ -272,7 +252,6 @@ private rebuildChartForTheme() {
     this.pointer = idx;
 
     this.revealCurrentOnly();
-    // Mensaje de estado más limpio: el detalle va en las pills de abajo
     this.setStatus(`Sincronizado · ${nowStr}`);
     this.setNextAt();
   }
@@ -304,8 +283,6 @@ private rebuildChartForTheme() {
     if (this.timer) { window.clearInterval(this.timer); this.timer = null; }
     if (this.secondTimer) { window.clearInterval(this.secondTimer); this.secondTimer = null; }
   }
-
-  // ===== Chart y datos =====
   private revealCurrentOnly() {
     if (!this.data) return;
     const t = this.data.temperature.values[this.pointer];
@@ -319,8 +296,6 @@ private rebuildChartForTheme() {
 
     this.currentTimeEl.textContent = t.time;
     this.progressEl.textContent = `${this.pointer + 1} / ${this.data.temperature.values.length}`;
-
-    // Actualiza últimos cambios
     this.pushRecent('temp', t.time, tempC);
     this.pushRecent('energy', t.time, energyKWh);
     this.renderRecent();
@@ -345,7 +320,6 @@ private rebuildChartForTheme() {
     this.revealCurrentOnly();
   }
 
-  // ===== Configurar gráfico =====
   private setupChart() {
     if (this.plot) { this.plot.destroy(); this.plot = null; }
 
@@ -411,7 +385,7 @@ private rebuildChartForTheme() {
     };
 
     this.plot = new uPlot(opts, [[], [], []], this.chartEl);
-    this.refreshChartColors(); // aplica colores iniciales
+    this.refreshChartColors();
 
     if (!this.resizeObs) {
       this.resizeObs = new ResizeObserver(() => {
@@ -437,7 +411,6 @@ private rebuildChartForTheme() {
     this.plot!.setData([x, tData, eData]);
   }
 
-  // ===== Utilidades =====
   private setStatus(msg: string) { this.statusEl.textContent = msg; }
   private pushRecent(kind: 'temp' | 'energy', time: string, value: number | null) {
     if (value === null || Number.isNaN(value)) return;

@@ -187,7 +187,6 @@
     </meteo-dashboard>
 
     <script>
-      // Cambiador de tema (dropdown accesible, sin localStorage)
       (function () {
         const THEMES = new Set(["dark", "ocean", "sunset"]);
         const link = document.getElementById("theme");
@@ -202,8 +201,6 @@
         const items = Array.from(menu.querySelectorAll(".dropdown-item"));
 
         const hrefFor = (t) => `./themes/${t}.css`;
-
-        // Estado inicial
         link.href = hrefFor(initial);
         current.textContent = 'Tema';
         items.forEach((i) =>
@@ -235,19 +232,16 @@
           return s.charAt(0).toUpperCase() + s.slice(1);
         }
 
-        // Abrir/cerrar con click
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           dd.classList.contains("open") ? closeMenu() : openMenu();
         });
-        // Selección con click
         items.forEach((i) =>
           i.addEventListener("click", (e) => {
             e.stopPropagation();
             setTheme(i.dataset.theme);
           })
         );
-        // Teclado: Enter/Espacio abre, ↑/↓ navega, Enter selecciona, Esc cierra
         btn.addEventListener("keydown", (e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
@@ -280,7 +274,6 @@
             btn.focus();
           }
         });
-        // Cerrar al hacer click fuera
         window.addEventListener("click", (e) => {
           if (!dd.contains(e.target)) closeMenu();
         });

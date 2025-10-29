@@ -18,8 +18,6 @@ module.exports = {
     filename: "[name].js",
     clean: true,
   },
-
-  // 👇 usa el nombre correcto del plugin
   plugins: [
     new HtmlRspackPlugin({
       template: "./index.html",
