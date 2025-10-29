@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Meteo Dashboard</title>
+    <title>Panel Meteo‑Energía</title>
 
     <!-- uPlot CSS -->
     <link
@@ -14,7 +14,7 @@
     <!-- Estilos de la app  -->
     <link rel="stylesheet" href="./styles/base.css" />
     <!-- Tema activo --Href se actualiza en runtime. -->
-    <link id="theme" rel="stylesheet" href="./themes/dark.css" />
+    <link id="theme" rel="stylesheet" href="./themes/ocean.css" />
   </head>
 
   <body>
@@ -29,13 +29,13 @@
               fill="none"
               aria-hidden="true"
             >
-              <path
-                d="M3 12a9 9 0 1 1 18 0v6.5a1.5 1.5 0 0 1-3 0V12a6 6 0 1 0-12 0v6.5a1.5 1.5 0 0 1-3 0V12Z"
-                stroke="currentColor"
-                stroke-width="1.5"
-              />
+              <!-- Sol -->
+              <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.5" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <!-- Rayo (energía) -->
+              <path d="M13 7l-3 5h2l-1 5l4-6h-2l0-4z" fill="currentColor" />
             </svg>
-            <h1>Meteo Dashboard</h1>
+            <h1>Visor Meteo-Energético</h1>
            
           </div>
 
@@ -192,8 +192,8 @@
         const THEMES = new Set(["dark", "ocean", "sunset"]);
         const link = document.getElementById("theme");
         const url = new URL(window.location.href);
-        const param = (url.searchParams.get("theme") || "dark").toLowerCase();
-        const initial = THEMES.has(param) ? param : "dark";
+        const param = (url.searchParams.get("theme") || "ocean").toLowerCase();
+        const initial = THEMES.has(param) ? param : "ocean";
 
         const dd = document.getElementById("themeDropdown");
         const btn = document.getElementById("btnTheme");

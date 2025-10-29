@@ -8,10 +8,11 @@
     --text: #e6ecff;
     --muted: #a9b8ff;
 
-    --c-temp: #7fb3ff;
-    --c-temp-a: rgba(127, 179, 255, 0.3);
-    --c-energy: #73e0c7;
-    --c-energy-a: rgba(115, 224, 199, 0.3);
+    /* Colores de series con mayor contraste */
+    --c-temp: #4dabf7; /* azul vivo */
+    --c-temp-a: rgba(77, 171, 247, 0.32);
+    --c-energy: #ffb74d; /* ámbar contrastado */
+    --c-energy-a: rgba(255, 183, 77, 0.32);
 
     --ok: #34d399;
     --warn: #ffd479;
