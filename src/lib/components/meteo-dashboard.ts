@@ -57,6 +57,13 @@ export class MeteoDashboard extends LitElement {
   private resizeObs: ResizeObserver | null = null;
   private themeObs: MutationObserver | null = null;
   private _onThemeLinkLoad?: () => void;
+  private timeObs: MutationObserver | null = null;
+
+  // Últimos cambios
+  private recentTemp: { time: string; value: number }[] = [];
+  private recentEnergy: { time: string; value: number }[] = [];
+  private recentTempEl!: HTMLUListElement;
+  private recentEnergyEl!: HTMLUListElement;
 
   private xLabels: string[] = [];
   private showTemp = true;
@@ -90,6 +97,19 @@ export class MeteoDashboard extends LitElement {
       });
       this.themeObs.observe(themeLink, { attributes: true, attributeFilter: ['href'] });
     }
+
+    // Sincroniza el texto de estado con el tiempo actual mostrado
+    if (!this.timeObs) {
+      const updateFromTime = () => {
+        const t = (this.currentTimeEl?.textContent || "").trim();
+        if (t && t.includes(":")) this.setStatus(`Sincronizado · ${t}`);
+      };
+      this.timeObs = new MutationObserver(updateFromTime);
+      if (this.currentTimeEl) {
+        this.timeObs.observe(this.currentTimeEl, { childList: true, characterData: true, subtree: true });
+        updateFromTime();
+      }
+    }
   }
 
   disconnectedCallback(): void {
@@ -103,6 +123,7 @@ export class MeteoDashboard extends LitElement {
       this._onThemeLinkLoad = undefined;
     }
     if (this.resizeObs) { this.resizeObs.disconnect(); this.resizeObs = null; }
+    if (this.timeObs) { this.timeObs.disconnect(); this.timeObs = null; }
     this.pause();
   }
 
@@ -158,6 +179,8 @@ private rebuildChartForTheme() {
     this.btnPlay = this.querySelector("#btnPlay") as HTMLButtonElement;
     this.toggleTempBtn = this.querySelector("#toggleTemp") as HTMLButtonElement;   // <-- fix
     this.toggleEnergyBtn = this.querySelector("#toggleEnergy") as HTMLButtonElement;
+    this.recentTempEl = this.querySelector("#recent-temp") as HTMLUListElement;
+    this.recentEnergyEl = this.querySelector("#recent-energy") as HTMLUListElement;
   }
 
   private wireToolbar() {
@@ -212,6 +235,9 @@ private rebuildChartForTheme() {
       this.pointer = 0;
       this.perMinute.clear();
       this.updateChart();
+      this.recentTemp = [];
+      this.recentEnergy = [];
+      this.renderRecent();
 
       // Sincroniza con hora real y arranca timers
       this.syncPointerToNow();
@@ -240,7 +266,8 @@ private rebuildChartForTheme() {
     this.pointer = idx;
 
     this.revealCurrentOnly();
-    this.setStatus(`Sincronizado a ${nowStr}. Reproduciendo cada 5s…`);
+    // Mensaje de estado más limpio: el detalle va en las pills de abajo
+    this.setStatus(`Sincronizado · ${nowStr}`);
     this.setNextAt();
   }
 
@@ -286,6 +313,11 @@ private rebuildChartForTheme() {
 
     this.currentTimeEl.textContent = t.time;
     this.progressEl.textContent = `${this.pointer + 1} / ${this.data.temperature.values.length}`;
+
+    // Actualiza últimos cambios
+    this.pushRecent('temp', t.time, tempC);
+    this.pushRecent('energy', t.time, energyKWh);
+    this.renderRecent();
 
     const minuteKey = t.time.slice(0, 5);
     const bucket = this.perMinute.get(minuteKey) || { t: [], e: [] };
@@ -401,6 +433,19 @@ private rebuildChartForTheme() {
 
   // ===== Utilidades =====
   private setStatus(msg: string) { this.statusEl.textContent = msg; }
+  private pushRecent(kind: 'temp' | 'energy', time: string, value: number | null) {
+    if (value === null || Number.isNaN(value)) return;
+    const arr = kind === 'temp' ? this.recentTemp : this.recentEnergy;
+    arr.unshift({ time, value });
+    if (arr.length > 5) arr.length = 5;
+  }
+  private renderRecent() {
+    if (!this.recentTempEl || !this.recentEnergyEl) return;
+    const tpl = (arr: { time: string; value: number }[], unit: string) =>
+      arr.map(e => `<li><span class="t">${e.time}</span><span class="v">${this.fmt2(e.value)} <span class="unit">${unit}</span></span></li>`).join("");
+    this.recentTempEl.innerHTML = tpl(this.recentTemp, "°C");
+    this.recentEnergyEl.innerHTML = tpl(this.recentEnergy, "kWh");
+  }
   private toSeconds(t: string) { const [H,M,S] = t.split(":").map(Number); return H*3600 + M*60 + S; }
   private toCelsius(value: number, unit?: string) {
     const u = (unit || "").toLowerCase();

@@ -109,26 +109,50 @@
 
             <div class="grid2">
               <div class="kpi">
-                <b>Último valor (temperatura)</b>
-                <div class="big">
-                  <span id="last-temp">—</span> <span class="dim">°C</span>
+                <div class="kpi-head">
+                  <div class="kpi-left">
+                    <span class="kpi-icon">🌡️</span>
+                    <span class="kpi-title">Temperatura</span>
+                  </div>
+                  <span class="kpi-meta"></span>
+                </div>
+                <div class="kpi-value">
+                  <span id="last-temp" class="value">—</span>
+                  <span class="unit">°C</span>
                 </div>
               </div>
               <div class="kpi">
-                <b>Último valor (energía)</b>
-                <div class="big">
-                  <span id="last-energy">—</span> <span class="dim">kWh</span>
+                <div class="kpi-head">
+                  <div class="kpi-left">
+                    <span class="kpi-icon">⚡</span>
+                    <span class="kpi-title">Energía</span>
+                  </div>
+                  <span class="kpi-meta"></span>
+                </div>
+                <div class="kpi-value">
+                  <span id="last-energy" class="value">—</span>
+                  <span class="unit">kWh</span>
                 </div>
               </div>
             </div>
 
             <div class="meta">
-              <span class="pill"
-                >Dato: <strong id="current-time">—:—:—</strong></span
-              >
+              <span id="current-time" class="sr-only">—:—:—</span>
               <span class="pill"
                 >Próx. actualización en <strong id="next-in">—</strong>s</span
               >
+            </div>
+
+            <!-- Últimos cambios (temperatura y energía) -->
+            <div class="recent">
+              <div class="recent-col">
+                <div class="recent-title"><span class="swatch temp"></span> Temp</div>
+                <ul id="recent-temp" class="recent-list"></ul>
+              </div>
+              <div class="recent-col">
+                <div class="recent-title"><span class="swatch energy"></span> Energía</div>
+                <ul id="recent-energy" class="recent-list"></ul>
+              </div>
             </div>
           </section>
 
@@ -164,8 +188,7 @@
               aria-label="Gráfico de líneas: temperatura y energía por minuto"
             ></div>
             <div class="help">
-              Accesible, responsive y eficiente (agregación incremental por
-              minuto).
+             
             </div>
           </section>
         </div>

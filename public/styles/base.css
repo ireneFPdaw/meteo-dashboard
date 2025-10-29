@@ -106,16 +106,38 @@ header {
     border-radius: 14px;
     padding: 12px;
 }
-.kpi b {
-    display: block;
-    font-size: 12px;
-    color: var(--muted);
+.kpi-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: 6px;
 }
-.kpi .big {
+.kpi-left { display: inline-flex; align-items: center; gap: 6px; }
+.kpi-icon { font-size: 16px; }
+.kpi-title {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+.kpi-meta {
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.9;
+}
+.kpi-value {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+.kpi-value .value {
     font-size: 30px;
     font-weight: 900;
     letter-spacing: 0.3px;
+}
+.kpi-value .unit {
+    color: var(--muted);
+    opacity: 0.9;
 }
 .meta {
     display: flex;
@@ -308,3 +330,45 @@ footer {
     gap: 10px;
     align-items: center;
 }
+
+/* Accesibilidad: elemento solo para lectores de pantalla */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Últimos cambios */
+.recent {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+}
+.recent-title {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.recent-list { list-style: none; padding: 0; margin: 0; }
+.recent-list li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 4px 6px;
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 80%);
+}
+.recent-list li + li { margin-top: 4px; }
+.recent-list .t { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--muted); }
+.recent-list .v { font-weight: 700; font-size: 13px; }
+.recent-list .unit { color: var(--muted); margin-left: 4px; font-weight: 500; }
