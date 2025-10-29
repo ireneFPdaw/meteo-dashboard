@@ -1,18 +1,24 @@
 :root {
-    --bg: #06131f;
-    --bg2: #061927;
-    --panel: #0a2336;
-    --panel-2: #0b2b45;
-    --border: rgba(104, 198, 255, 0.2);
+    /* Paleta clara (Ocean - Light) */
+    --bg: #f4fbff;
+    --bg2: #e8f5ff;
+    --panel: #ffffff;
+    --panel-2: #f6fbff;
+    --border: rgba(7, 89, 133, 0.18);
 
-    --text: #e9f6ff;
-    --muted: #a7d8ff;
+    --text: #0f1f2d;
+    --muted: #365b74;
 
-    --c-temp: #64b5f6; /* azul suave */
-    --c-temp-a: rgba(100, 181, 246, 0.28);
-    --c-energy: #4dd0e1; /* cian */
-    --c-energy-a: rgba(77, 208, 225, 0.28);
+    /* Series */
+    --c-temp: #1e88e5; /* azul temperatura */
+    --c-temp-a: rgba(30, 136, 229, 0.18);
+    --c-energy: #26a69a; /* verde-azulado energía */
+    --c-energy-a: rgba(38, 166, 154, 0.18);
 
-    --ok: #2dd4bf;
-    --warn: #ffd166;
+    --ok: #059669;
+    --warn: #b45309;
 }
+
+/* Mejora de contraste en tema claro */
+.status { color: var(--text); }
+.pill { color: var(--muted); }

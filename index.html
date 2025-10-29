@@ -53,7 +53,7 @@
                 aria-controls="themeMenu"
                 title="Cambiar tema"
               >
-                <span id="themeCurrent" class="theme-current">Dark</span>
+                <span id="themeCurrent" class="theme-current">Tema</span>
                 <span class="chevron" aria-hidden="true">▾</span>
               </button>
 
@@ -69,7 +69,7 @@
                   data-theme="dark"
                   aria-selected="true"
                 >
-                  Dark
+                  Oscuro
                 </button>
                 <button
                   class="dropdown-item"
@@ -77,7 +77,7 @@
                   data-theme="ocean"
                   aria-selected="false"
                 >
-                  Ocean
+                  Claro
                 </button>
                 <button
                   class="dropdown-item"
@@ -205,7 +205,7 @@
 
         // Estado inicial
         link.href = hrefFor(initial);
-        current.textContent = capitalize(initial);
+        current.textContent = 'Tema';
         items.forEach((i) =>
           i.setAttribute("aria-selected", String(i.dataset.theme === initial))
         );
@@ -221,7 +221,7 @@
         }
         function setTheme(theme) {
           link.href = hrefFor(theme);
-          current.textContent = capitalize(theme);
+          current.textContent = 'Tema';
           items.forEach((i) =>
             i.setAttribute("aria-selected", String(i.dataset.theme === theme))
           );

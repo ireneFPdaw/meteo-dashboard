@@ -386,8 +386,8 @@ private rebuildChartForTheme() {
           values: (_u, vals) =>
             (vals as number[]).map(v => this.xLabels[Math.round(v)] ?? ""),
         },
-        { scale: "temp",   label: "°C",  stroke: axisColor },
-        { side: 1, scale: "energy", label: "kWh", stroke: axisColor },
+        { scale: "temp",   label: "°C",  stroke: axisColor, size: 48, gap: 6 },
+        { side: 1, scale: "energy", label: "kWh", stroke: axisColor, size: 56, gap: 6 },
       ],
       series: [
         {},
