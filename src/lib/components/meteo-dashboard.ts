@@ -55,6 +55,8 @@ export class MeteoDashboard extends LitElement {
   private perMinute = new Map<string, Bucket>();
   private plot: uPlot | null = null;
   private resizeObs: ResizeObserver | null = null;
+  private themeObs: MutationObserver | null = null;
+  private _onThemeLinkLoad?: () => void;
 
   private xLabels: string[] = [];
   private showTemp = true;
@@ -68,15 +70,38 @@ export class MeteoDashboard extends LitElement {
     this.setupChart();
     this.loadFromPublic();
 
-    // Reaccionar a cambios de tema (solo refrescar colores)
-    this._onThemeChanged = () => this.refreshChartColors();
+    // Reaccionar a cambios de tema (reconstruir para aplicar ejes/grid)
+    this._onThemeChanged = () => this.rebuildChartForTheme();
     window.addEventListener("theme-changed", this._onThemeChanged);
+
+    // Observa cambios en el <link id="theme"> para detectar cambio de tema
+    const themeLink = document.querySelector('link#theme') as HTMLLinkElement | null;
+    if (themeLink && !this.themeObs) {
+      this._onThemeLinkLoad = () => this.rebuildChartForTheme();
+      this.themeObs = new MutationObserver(() => {
+        // Espera a que cargue la hoja de estilos antes de leer las CSS vars
+        if (this._onThemeLinkLoad) {
+          themeLink.removeEventListener('load', this._onThemeLinkLoad);
+          themeLink.addEventListener('load', this._onThemeLinkLoad, { once: true });
+        } else {
+          // Fallback por si no existe handler
+          setTimeout(() => this.refreshChartColors(), 0);
+        }
+      });
+      this.themeObs.observe(themeLink, { attributes: true, attributeFilter: ['href'] });
+    }
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     if (this._onThemeChanged)
       window.removeEventListener("theme-changed", this._onThemeChanged);
+    if (this.themeObs) { this.themeObs.disconnect(); this.themeObs = null; }
+    if (this._onThemeLinkLoad) {
+      const themeLink = document.querySelector('link#theme') as HTMLLinkElement | null;
+      if (themeLink) themeLink.removeEventListener('load', this._onThemeLinkLoad);
+      this._onThemeLinkLoad = undefined;
+    }
     if (this.resizeObs) { this.resizeObs.disconnect(); this.resizeObs = null; }
     this.pause();
   }
@@ -108,6 +133,16 @@ private refreshChartColors() {
   // 🔒 Solo repintamos si ya hay datos (x) para evitar el crash de uPlot
   const hasData = Array.isArray((this.plot as any).data?.[0]) && (this.plot as any).data[0].length > 0;
   if (hasData) this.plot.redraw();
+}
+
+// Reconstruye el gráfico para aplicar cambios de ejes/grid por tema
+private rebuildChartForTheme() {
+  const hadPlot = !!this.plot;
+  this.setupChart();
+  // Si ya había datos calculados, reponerlos
+  if (hadPlot && this.perMinute.size > 0) {
+    this.updateChart();
+  }
 }
 
 
@@ -293,6 +328,9 @@ private refreshChartColors() {
     const energyColor = css("--c-energy", "#73e0c7");
     const energyFill  = css("--c-energy-a","rgba(115,224,199,.30)");
 
+    const axisColor = css("--muted",  "rgba(190,205,255,.90)");
+    const gridColor = css("--border", "rgba(130,150,210,.25)");
+
     const opts: uPlot.Options = {
       title: "",
       width: getW(),
@@ -305,13 +343,13 @@ private refreshChartColors() {
       },
       axes: [
         {
-          stroke: "rgba(190,205,255,.85)",
-          grid: { show: true, stroke: "rgba(130,150,210,.25)" },
+          stroke: axisColor,
+          grid: { show: true, stroke: gridColor },
           values: (_u, vals) =>
             (vals as number[]).map(v => this.xLabels[Math.round(v)] ?? ""),
         },
-        { scale: "temp",   label: "°C",  stroke: "rgba(190,205,255,.9)" },
-        { side: 1, scale: "energy", label: "kWh", stroke: "rgba(190,205,255,.9)" },
+        { scale: "temp",   label: "°C",  stroke: axisColor },
+        { side: 1, scale: "energy", label: "kWh", stroke: axisColor },
       ],
       series: [
         {},
