@@ -1,0 +1,310 @@
+/* Define la estructura visual (layout, cards, kpis, leyendas) y no fija colores.
+**Todo color sale de variables CSS (--bg, --c-temp, etc.) que aportan los temas.
+=============================================================== */
+
+* {
+    box-sizing: border-box;
+}
+html,
+body {
+    height: 100%;
+}
+body {
+    margin: 0;
+    color: var(--text);
+    background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(124, 196, 255, 0.08), transparent 40%),
+        linear-gradient(180deg, var(--bg), var(--bg2) 40%, var(--bg));
+    font:
+        15px/1.5 Inter,
+        ui-sans-serif,
+        system-ui,
+        Segoe UI,
+        Roboto,
+        Arial;
+    letter-spacing: 0.2px;
+}
+.wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.title {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.title h1 {
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    font-size: 28px;
+}
+.badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(124, 196, 255, 0.1);
+    font-size: 12px;
+    color: var(--muted);
+}
+.layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 18px;
+}
+@media (max-width: 980px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Cards */
+.card {
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 60%),
+        radial-gradient(800px 400px at 0% 0%, rgba(124, 196, 255, 0.07), transparent 45%), var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+/* Sidebar */
+.side {
+    padding: 14px;
+}
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #c9d6ff;
+}
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--ok);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--ok) 25%, transparent);
+}
+.grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.kpi {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 70%), var(--panel-2);
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    padding: 12px;
+}
+.kpi b {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+.kpi .big {
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: 0.3px;
+}
+.meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+.pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(124, 196, 255, 0.06);
+    font-size: 12px;
+    color: #c9d6ff;
+}
+
+/* Chart */
+.chart {
+    padding: 12px 12px 18px;
+}
+.chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 2px 4px 10px;
+}
+.chart-title {
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+.legend {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.legend .pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: currentColor;
+    opacity: 0.9;
+}
+.swatch.temp {
+    color: var(--c-temp);
+}
+.swatch.energy {
+    color: var(--c-energy);
+}
+.legend button {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+}
+.legend button[aria-pressed="true"] {
+    background: rgba(124, 196, 255, 0.1);
+    color: var(--text);
+}
+
+#chart {
+    height: 360px;
+    width: 100%;
+}
+.help {
+    margin-top: 10px;
+    color: #9fb2ff;
+    font-size: 12px;
+    text-align: center;
+}
+.dim {
+    opacity: 0.9;
+}
+
+footer {
+    margin-top: 18px;
+    color: #9fb2ff;
+    font-size: 12px;
+}
+
+/* Selector de temas */
+.theme-select {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.theme-select select {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(124, 196, 255, 0.06);
+    color: var(--text);
+    font-size: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition:
+        0.15s border-color,
+        0.15s background,
+        0.04s transform;
+}
+.btn:hover {
+    border-color: rgba(124, 196, 255, 0.35);
+}
+.btn[aria-pressed="true"] {
+    background: rgba(124, 196, 255, 0.12);
+}
+.btn:active {
+    transform: translateY(1px);
+}
+.btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-temp) 40%, transparent);
+}
+.icon-btn {
+    width: 32px;
+    justify-content: center;
+    padding: 0;
+}
+.badge.sm {
+    font-size: 11px;
+    padding: 2px 8px;
+}
+
+/* Dropdown (combobox) */
+.dropdown {
+    position: relative;
+}
+.chevron {
+    opacity: 0.75;
+}
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    min-width: 160px;
+    padding: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    display: none;
+    z-index: 1000;
+}
+.dropdown.open .dropdown-menu {
+    display: block;
+}
+.dropdown-item {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+.dropdown-item:hover,
+.dropdown-item[aria-selected="true"] {
+    background: rgba(124, 196, 255, 0.12);
+    border-color: rgba(124, 196, 255, 0.25);
+}
+.dropdown-menu:focus {
+    outline: none;
+}
+.toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Meteo Dashboard</title>
+
+    <!-- uPlot CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/uplot@1.6.30/dist/uPlot.min.css"
+    />
+
+    <!-- Estilos de la app  -->
+    <link rel="stylesheet" href="./styles/base.css" />
+    <!-- Tema activo --Href se actualiza en runtime. -->
+    <link id="theme" rel="stylesheet" href="./themes/dark.css" />
+  </head>
+
+  <body>
+    <meteo-dashboard>
+      <div class="wrap">
+        <header>
+          <div class="title">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M3 12a9 9 0 1 1 18 0v6.5a1.5 1.5 0 0 1-3 0V12a6 6 0 1 0-12 0v6.5a1.5 1.5 0 0 1-3 0V12Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+            </svg>
+            <h1>Meteo Dashboard</h1>
+           
+          </div>
+
+          <!-- Toolbar -->
+          <div class="toolbar">
+            <span class="badge" id="progress"  title="Número de registros">—</span>
+            <button
+              id="btnPlay"
+              class="btn icon-btn"
+              aria-pressed="true"
+              title="Reproducir/Pausar"
+            >
+              ⏵/⏸
+            </button>
+
+            <!-- Combobox de tema (custom, accesible) -->
+            <div class="dropdown" id="themeDropdown">
+              <button
+                id="btnTheme"
+                class="btn"
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-controls="themeMenu"
+                title="Cambiar tema"
+              >
+                <span id="themeCurrent" class="badge sm">Dark</span>
+                <span class="chevron" aria-hidden="true">▾</span>
+              </button>
+
+              <div
+                id="themeMenu"
+                class="dropdown-menu"
+                role="listbox"
+                tabindex="-1"
+              >
+                <button
+                  class="dropdown-item"
+                  role="option"
+                  data-theme="dark"
+                  aria-selected="true"
+                >
+                  Dark
+                </button>
+                <button
+                  class="dropdown-item"
+                  role="option"
+                  data-theme="ocean"
+                  aria-selected="false"
+                >
+                  Ocean
+                </button>
+                <button
+                  class="dropdown-item"
+                  role="option"
+                  data-theme="sunset"
+                  aria-selected="false"
+                >
+                  Sunset
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="layout">
+          <section class="card side">
+            <div class="status">
+              <span class="dot"></span>
+              <span id="status">Cargando /data.yml…</span>
+            </div>
+
+            <div class="grid2">
+              <div class="kpi">
+                <b>Último valor (temperatura)</b>
+                <div class="big">
+                  <span id="last-temp">—</span> <span class="dim">°C</span>
+                </div>
+              </div>
+              <div class="kpi">
+                <b>Último valor (energía)</b>
+                <div class="big">
+                  <span id="last-energy">—</span> <span class="dim">kWh</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="meta">
+              <span class="pill"
+                >Dato: <strong id="current-time">—:—:—</strong></span
+              >
+              <span class="pill"
+                >Próx. actualización en <strong id="next-in">—</strong>s</span
+              >
+            </div>
+          </section>
+
+          <section class="card chart">
+            <div class="chart-header">
+              <div class="chart-title">Predicción (media por minuto)</div>
+              <div class="legend">
+                <span class="pill"
+                  ><span class="swatch temp"></span> Temp (°C)</span
+                >
+                <span class="pill"
+                  ><span class="swatch energy"></span> Energía (kWh)</span
+                >
+                <button
+                  id="toggleTemp"
+                  aria-pressed="true"
+                  title="Mostrar/ocultar temperatura"
+                >
+                  Temp
+                </button>
+                <button
+                  id="toggleEnergy"
+                  aria-pressed="true"
+                  title="Mostrar/ocultar energía"
+                >
+                  Energía
+                </button>
+              </div>
+            </div>
+            <div
+              id="chart"
+              role="img"
+              aria-label="Gráfico de líneas: temperatura y energía por minuto"
+            ></div>
+            <div class="help">
+              Accesible, responsive y eficiente (agregación incremental por
+              minuto).
+            </div>
+          </section>
+        </div>
+
+        <footer>Stack: Web Components (Lit), TypeScript, Rspack, uPlot.</footer>
+      </div>
+    </meteo-dashboard>
+
+    <script>
+      // Cambiador de tema (dropdown accesible, sin localStorage)
+      (function () {
+        const THEMES = new Set(["dark", "ocean", "sunset"]);
+        const link = document.getElementById("theme");
+        const url = new URL(window.location.href);
+        const param = (url.searchParams.get("theme") || "dark").toLowerCase();
+        const initial = THEMES.has(param) ? param : "dark";
+
+        const dd = document.getElementById("themeDropdown");
+        const btn = document.getElementById("btnTheme");
+        const menu = document.getElementById("themeMenu");
+        const current = document.getElementById("themeCurrent");
+        const items = Array.from(menu.querySelectorAll(".dropdown-item"));
+
+        const hrefFor = (t) => `./themes/${t}.css`;
+
+        // Estado inicial
+        link.href = hrefFor(initial);
+        current.textContent = capitalize(initial);
+        items.forEach((i) =>
+          i.setAttribute("aria-selected", String(i.dataset.theme === initial))
+        );
+
+        function openMenu() {
+          dd.classList.add("open");
+          btn.setAttribute("aria-expanded", "true");
+          menu.focus();
+        }
+        function closeMenu() {
+          dd.classList.remove("open");
+          btn.setAttribute("aria-expanded", "false");
+        }
+        function setTheme(theme) {
+          link.href = hrefFor(theme);
+          current.textContent = capitalize(theme);
+          items.forEach((i) =>
+            i.setAttribute("aria-selected", String(i.dataset.theme === theme))
+          );
+          url.searchParams.set("theme", theme);
+          history.replaceState(null, "", url.toString());
+          window.dispatchEvent(new CustomEvent("theme-changed"));
+          closeMenu();
+          btn.focus();
+        }
+        function capitalize(s) {
+          return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        // Abrir/cerrar con click
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          dd.classList.contains("open") ? closeMenu() : openMenu();
+        });
+        // Selección con click
+        items.forEach((i) =>
+          i.addEventListener("click", (e) => {
+            e.stopPropagation();
+            setTheme(i.dataset.theme);
+          })
+        );
+        // Teclado: Enter/Espacio abre, ↑/↓ navega, Enter selecciona, Esc cierra
+        btn.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openMenu();
+          }
+        });
+        menu.addEventListener("keydown", (e) => {
+          const idx = items.findIndex(
+            (i) => i.getAttribute("aria-selected") === "true"
+          );
+          let next = idx;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            next = (idx + 1) % items.length;
+            items[next].focus();
+          }
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            next = (idx - 1 + items.length) % items.length;
+            items[next].focus();
+          }
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            const t = document.activeElement?.getAttribute("data-theme");
+            if (t) setTheme(t);
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            closeMenu();
+            btn.focus();
+          }
+        });
+        // Cerrar al hacer click fuera
+        window.addEventListener("click", (e) => {
+          if (!dd.contains(e.target)) closeMenu();
+        });
+      })();
+    </script>
+  </body>
+</html>
