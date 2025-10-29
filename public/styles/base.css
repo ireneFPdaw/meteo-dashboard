@@ -174,6 +174,7 @@ header {
     flex-wrap: wrap;
     align-items: center;
 }
+.legend-bottom { margin-top: 10px; justify-content: center; }
 .legend .pill {
     display: flex;
     align-items: center;
@@ -200,10 +201,17 @@ header {
     padding: 6px 10px;
     border-radius: 999px;
     font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 .legend button[aria-pressed="true"] {
     background: rgba(124, 196, 255, 0.1);
     color: var(--text);
+}
+.legend button[aria-pressed="false"] {
+    opacity: 0.6;
+    text-decoration: line-through;
 }
 
 #chart {
@@ -280,6 +288,15 @@ footer {
 .badge.sm {
     font-size: 11px;
     padding: 2px 8px;
+}
+
+/* Texto del tema actual dentro del botón (sin óvalo) */
+.theme-current {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0;
+    border: 0;
+    background: transparent;
 }
 
 /* Dropdown (combobox) */

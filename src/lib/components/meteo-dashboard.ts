@@ -35,7 +35,7 @@ export class MeteoDashboard extends LitElement {
   private progressEl!: HTMLElement;
   private currentTimeEl!: HTMLElement;
   private nextInEl!: HTMLElement;
-  private btnPlay!: HTMLButtonElement;
+  private btnPlay: HTMLButtonElement | null = null;
   private toggleTempBtn!: HTMLButtonElement;
   private toggleEnergyBtn!: HTMLButtonElement;
 
@@ -176,7 +176,7 @@ private rebuildChartForTheme() {
     this.progressEl = this.querySelector("#progress") as HTMLElement;
     this.currentTimeEl = this.querySelector("#current-time") as HTMLElement;
     this.nextInEl = this.querySelector("#next-in") as HTMLElement;
-    this.btnPlay = this.querySelector("#btnPlay") as HTMLButtonElement;
+    this.btnPlay = this.querySelector("#btnPlay") as HTMLButtonElement | null;
     this.toggleTempBtn = this.querySelector("#toggleTemp") as HTMLButtonElement;   // <-- fix
     this.toggleEnergyBtn = this.querySelector("#toggleEnergy") as HTMLButtonElement;
     this.recentTempEl = this.querySelector("#recent-temp") as HTMLUListElement;
@@ -184,23 +184,29 @@ private rebuildChartForTheme() {
   }
 
   private wireToolbar() {
-    this.btnPlay?.addEventListener("click", () => {
-      this.playing ? this.pause() : this.startAuto();
-      this.btnPlay.setAttribute("aria-pressed", String(this.playing));
-    });
+    // Inicializa estado visual de los toggles
+    this.toggleTempBtn?.setAttribute("aria-pressed", String(this.showTemp));
+    this.toggleTempBtn?.setAttribute("title", this.showTemp ? "Ocultar temperatura" : "Mostrar temperatura");
+    this.toggleEnergyBtn?.setAttribute("aria-pressed", String(this.showEnergy));
+    this.toggleEnergyBtn?.setAttribute("title", this.showEnergy ? "Ocultar energía" : "Mostrar energía");
     this.toggleTempBtn?.addEventListener("click", () => {
       this.showTemp = !this.showTemp;
       this.toggleTempBtn.setAttribute("aria-pressed", String(this.showTemp));
+      this.toggleTempBtn.setAttribute("title", this.showTemp ? "Ocultar temperatura" : "Mostrar temperatura");
       this.updateChart();
     });
     this.toggleEnergyBtn?.addEventListener("click", () => {
       this.showEnergy = !this.showEnergy;
       this.toggleEnergyBtn.setAttribute("aria-pressed", String(this.showEnergy));
+      this.toggleEnergyBtn.setAttribute("title", this.showEnergy ? "Ocultar energía" : "Mostrar energía");
       this.updateChart();
     });
-    // Accesibilidad: barra espaciadora = play/pausa
+    // Accesibilidad: barra espaciadora = play/pausa (aunque no haya botón)
     this.addEventListener("keydown", (e: KeyboardEvent) => {
-      if (e.code === "Space") { e.preventDefault(); this.btnPlay.click(); }
+      if (e.code === "Space") {
+        e.preventDefault();
+        this.playing ? this.pause() : this.startAuto();
+      }
     });
   }
 

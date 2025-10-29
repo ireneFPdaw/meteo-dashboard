@@ -41,15 +41,7 @@
 
           <!-- Toolbar -->
           <div class="toolbar">
-            <span class="badge" id="progress"  title="Número de registros">—</span>
-            <button
-              id="btnPlay"
-              class="btn icon-btn"
-              aria-pressed="true"
-              title="Reproducir/Pausar"
-            >
-              ⏵/⏸
-            </button>
+            <span class="badge" title="Progreso de reproducción (actual/total)">Progreso: <span id="progress">—</span></span>
 
             <!-- Combobox de tema (custom, accesible) -->
             <div class="dropdown" id="themeDropdown">
@@ -61,7 +53,7 @@
                 aria-controls="themeMenu"
                 title="Cambiar tema"
               >
-                <span id="themeCurrent" class="badge sm">Dark</span>
+                <span id="themeCurrent" class="theme-current">Dark</span>
                 <span class="chevron" aria-hidden="true">▾</span>
               </button>
 
@@ -159,26 +151,22 @@
           <section class="card chart">
             <div class="chart-header">
               <div class="chart-title">Predicción (media por minuto)</div>
-              <div class="legend">
-                <span class="pill"
-                  ><span class="swatch temp"></span> Temp (°C)</span
-                >
-                <span class="pill"
-                  ><span class="swatch energy"></span> Energía (kWh)</span
-                >
+              <div class="legend chart-controls">
                 <button
                   id="toggleTemp"
                   aria-pressed="true"
-                  title="Mostrar/ocultar temperatura"
+                  title="Ocultar temperatura"
                 >
-                  Temp
+                  <span class="swatch temp"></span>
+                  <span>Temp (°C)</span>
                 </button>
                 <button
                   id="toggleEnergy"
                   aria-pressed="true"
-                  title="Mostrar/ocultar energía"
+                  title="Ocultar energía"
                 >
-                  Energía
+                  <span class="swatch energy"></span>
+                  <span>Energía (kWh)</span>
                 </button>
               </div>
             </div>
@@ -187,6 +175,7 @@
               role="img"
               aria-label="Gráfico de líneas: temperatura y energía por minuto"
             ></div>
+           
             <div class="help">
              
             </div>
