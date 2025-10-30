@@ -97,7 +97,6 @@ Conversión automática °C / kWh
 - Barra superior → progreso + selección de tema
 - Lateral → KPI de temperatura y energía + últimos valores + contador
 - Panel principal → gráfico interactivo
-- **Barra espaciadora** → Pausar/Reanudar reproducción
 
 ---
 

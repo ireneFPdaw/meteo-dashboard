@@ -15,7 +15,8 @@ module.exports = {
 
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "[name].js",
+    filename: "assets/[name].[contenthash].js",
+    publicPath: "",
     clean: true,
   },
   plugins: [
