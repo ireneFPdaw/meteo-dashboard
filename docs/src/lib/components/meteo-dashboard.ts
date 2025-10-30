@@ -1,0 +1,452 @@
+import { LitElement, css } from "lit";
+import uPlot from "uplot";
+import yaml from "js-yaml";
+
+interface SeriesPoint {
+  time: string;
+  value: number;
+}
+interface SerieYaml {
+  unit?: string;
+  values: SeriesPoint[];
+}
+interface MeteoYaml {
+  temperature?: SerieYaml;
+  temperatura?: SerieYaml;
+  energy?: SerieYaml;
+  energia?: SerieYaml;
+  power?: SerieYaml;
+  potencia?: SerieYaml;
+}
+
+type Bucket = { t: number[]; e: number[] };
+
+export class MeteoDashboard extends LitElement {
+  static styles = css``;
+  createRenderRoot() { return this; }
+
+
+  private statusEl!: HTMLElement;
+  private lastTempEl!: HTMLElement;
+  private lastEnergyEl!: HTMLElement;
+  private chartEl!: HTMLElement;
+  private progressEl!: HTMLElement;
+  private currentTimeEl!: HTMLElement;
+  private nextInEl!: HTMLElement;
+  private btnPlay: HTMLButtonElement | null = null;
+  private toggleTempBtn!: HTMLButtonElement;
+  private toggleEnergyBtn!: HTMLButtonElement;
+  private timer: number | null = null;
+  private secondTimer: number | null = null;
+  private nextAt = 0;
+  private playing = true;
+  private _onThemeChanged?: () => void;
+
+  private data: {
+    temperature: { unit: string; values: SeriesPoint[] };
+    energy: { unit: string; values: SeriesPoint[] } | null;
+  } | null = null;
+
+  private pointer = 0;
+  private perMinute = new Map<string, Bucket>();
+  private plot: uPlot | null = null;
+  private resizeObs: ResizeObserver | null = null;
+  private themeObs: MutationObserver | null = null;
+  private _onThemeLinkLoad?: () => void;
+  private timeObs: MutationObserver | null = null;
+  private recentTemp: { time: string; value: number }[] = [];
+  private recentEnergy: { time: string; value: number }[] = [];
+  private recentTempEl!: HTMLUListElement;
+  private recentEnergyEl!: HTMLUListElement;
+
+  private xLabels: string[] = [];
+  private showTemp = true;
+  private showEnergy = true;
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    this.cacheElements();
+    this.wireToolbar();
+    this.setupChart();
+    this.loadFromPublic();
+    this._onThemeChanged = () => this.rebuildChartForTheme();
+    window.addEventListener("theme-changed", this._onThemeChanged);
+
+    const themeLink = document.querySelector('link#theme') as HTMLLinkElement | null;
+    if (themeLink && !this.themeObs) {
+      this._onThemeLinkLoad = () => this.rebuildChartForTheme();
+      this.themeObs = new MutationObserver(() => {
+        if (this._onThemeLinkLoad) {
+          themeLink.removeEventListener('load', this._onThemeLinkLoad);
+          themeLink.addEventListener('load', this._onThemeLinkLoad, { once: true });
+        } else {
+
+          setTimeout(() => this.refreshChartColors(), 0);
+        }
+      });
+      this.themeObs.observe(themeLink, { attributes: true, attributeFilter: ['href'] });
+    }
+
+    if (!this.timeObs) {
+      const updateFromTime = () => {
+        const t = (this.currentTimeEl?.textContent || "").trim();
+        if (t && t.includes(":")) this.setStatus(`Sincronizado · ${t}`);
+      };
+      this.timeObs = new MutationObserver(updateFromTime);
+      if (this.currentTimeEl) {
+        this.timeObs.observe(this.currentTimeEl, { childList: true, characterData: true, subtree: true });
+        updateFromTime();
+      }
+    }
+  }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback();
+    if (this._onThemeChanged)
+      window.removeEventListener("theme-changed", this._onThemeChanged);
+    if (this.themeObs) { this.themeObs.disconnect(); this.themeObs = null; }
+    if (this._onThemeLinkLoad) {
+      const themeLink = document.querySelector('link#theme') as HTMLLinkElement | null;
+      if (themeLink) themeLink.removeEventListener('load', this._onThemeLinkLoad);
+      this._onThemeLinkLoad = undefined;
+    }
+    if (this.resizeObs) { this.resizeObs.disconnect(); this.resizeObs = null; }
+    if (this.timeObs) { this.timeObs.disconnect(); this.timeObs = null; }
+    this.pause();
+  }
+
+
+private refreshChartColors() {
+  if (!this.plot) return;
+
+  const css = (v: string, fb: string) =>
+    (getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fb);
+
+  const tempColor   = css("--c-temp",    "#7fb3ff");
+  const tempFill    = css("--c-temp-a",  "rgba(127,179,255,.30)");
+  const energyColor = css("--c-energy",  "#73e0c7");
+  const energyFill  = css("--c-energy-a","rgba(115,224,199,.30)");
+
+
+  (this.plot as any).setSeries(1, {
+    stroke: tempColor,
+    points: { show: true, size: 5, stroke: tempColor, fill: tempFill },
+  } as any);
+
+  (this.plot as any).setSeries(2, {
+    stroke: energyColor,
+    points: { show: true, size: 5, stroke: energyColor, fill: energyFill },
+  } as any);
+
+
+  const hasData = Array.isArray((this.plot as any).data?.[0]) && (this.plot as any).data[0].length > 0;
+  if (hasData) this.plot.redraw();
+}
+
+
+private rebuildChartForTheme() {
+  const hadPlot = !!this.plot;
+  this.setupChart();
+
+  if (hadPlot && this.perMinute.size > 0) {
+    this.updateChart();
+  }
+}
+
+
+
+  private cacheElements() {
+    this.statusEl = this.querySelector("#status") as HTMLElement;
+    this.lastTempEl = this.querySelector("#last-temp") as HTMLElement;
+    this.lastEnergyEl = this.querySelector("#last-energy") as HTMLElement;
+    this.chartEl = this.querySelector("#chart") as HTMLElement;
+    this.progressEl = this.querySelector("#progress") as HTMLElement;
+    this.currentTimeEl = this.querySelector("#current-time") as HTMLElement;
+    this.nextInEl = this.querySelector("#next-in") as HTMLElement;
+    this.btnPlay = this.querySelector("#btnPlay") as HTMLButtonElement | null;
+    this.toggleTempBtn = this.querySelector("#toggleTemp") as HTMLButtonElement;
+    this.toggleEnergyBtn = this.querySelector("#toggleEnergy") as HTMLButtonElement;
+    this.recentTempEl = this.querySelector("#recent-temp") as HTMLUListElement;
+    this.recentEnergyEl = this.querySelector("#recent-energy") as HTMLUListElement;
+  }
+
+  private wireToolbar() {
+
+    this.toggleTempBtn?.setAttribute("aria-pressed", String(this.showTemp));
+    this.toggleTempBtn?.setAttribute("title", this.showTemp ? "Ocultar temperatura" : "Mostrar temperatura");
+    this.toggleEnergyBtn?.setAttribute("aria-pressed", String(this.showEnergy));
+    this.toggleEnergyBtn?.setAttribute("title", this.showEnergy ? "Ocultar energía" : "Mostrar energía");
+    this.toggleTempBtn?.addEventListener("click", () => {
+      this.showTemp = !this.showTemp;
+      this.toggleTempBtn.setAttribute("aria-pressed", String(this.showTemp));
+      this.toggleTempBtn.setAttribute("title", this.showTemp ? "Ocultar temperatura" : "Mostrar temperatura");
+      this.updateChart();
+    });
+    this.toggleEnergyBtn?.addEventListener("click", () => {
+      this.showEnergy = !this.showEnergy;
+      this.toggleEnergyBtn.setAttribute("aria-pressed", String(this.showEnergy));
+      this.toggleEnergyBtn.setAttribute("title", this.showEnergy ? "Ocultar energía" : "Mostrar energía");
+      this.updateChart();
+    });
+    this.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        this.playing ? this.pause() : this.startAuto();
+      }
+    });
+  }
+
+  private async loadFromPublic() {
+    try {
+      this.setStatus("Cargando /data.yml …");
+      const res = await fetch("./data.yml", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      const doc = yaml.load(text) as MeteoYaml;
+
+      const temperature = doc.temperature || doc.temperatura;
+      if (!temperature?.values?.length)
+        throw new Error("No hay temperature.values en el YAML");
+      const energy =
+        doc.energy || doc.energia || doc.power || doc.potencia || null;
+
+      const norm = (s: SerieYaml) => ({
+        unit: (s.unit || "K").trim(),
+        values: s.values
+          .map((v) => ({ time: v.time, value: Number(v.value) }))
+          .sort((a, b) => this.toSeconds(a.time) - this.toSeconds(b.time)),
+      });
+
+      this.data = {
+        temperature: norm(temperature),
+        energy: energy ? norm(energy) : null,
+      };
+
+      this.pointer = 0;
+      this.perMinute.clear();
+      this.updateChart();
+      this.recentTemp = [];
+      this.recentEnergy = [];
+      this.renderRecent();
+      this.syncPointerToNow();
+      this.startAuto();
+    } catch (err: any) {
+      console.error(err);
+      this.setStatus("Error cargando data.yml: " + err.message);
+    }
+  }
+  private syncPointerToNow() {
+    if (!this.data) return;
+    const now = new Date();
+    const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes()
+    ).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+    const nowSec = this.toSeconds(nowStr);
+
+    const arr = this.data.temperature.values;
+    let idx = 0;
+    for (let i = 0; i < arr.length; i++) {
+      const s = this.toSeconds(arr[i].time);
+      if (s <= nowSec) idx = i; else break;
+    }
+    this.pointer = idx;
+
+    this.revealCurrentOnly();
+    this.setStatus(`Sincronizado · ${nowStr}`);
+    this.setNextAt();
+  }
+
+  private setNextAt() {
+    this.nextAt = Date.now() + 5000;
+    if (this.secondTimer) clearInterval(this.secondTimer);
+    this.secondTimer = window.setInterval(() => {
+      const ms = this.nextAt - Date.now();
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      this.nextInEl.textContent = String(s);
+      if (ms <= 0) clearInterval(this.secondTimer!);
+    }, 200);
+  }
+
+  private startAuto() {
+    if (this.timer) return;
+    this.playing = true;
+    this.btnPlay?.setAttribute("aria-pressed", "true");
+    this.timer = window.setInterval(() => {
+      this.revealNext();
+      this.setNextAt();
+    }, 5000);
+  }
+
+  private pause() {
+    this.playing = false;
+    this.btnPlay?.setAttribute("aria-pressed", "false");
+    if (this.timer) { window.clearInterval(this.timer); this.timer = null; }
+    if (this.secondTimer) { window.clearInterval(this.secondTimer); this.secondTimer = null; }
+  }
+  private revealCurrentOnly() {
+    if (!this.data) return;
+    const t = this.data.temperature.values[this.pointer];
+    const e = this.data.energy ? this.data.energy.values[this.pointer] : null;
+
+    const tempC = this.toCelsius(t.value, this.data.temperature.unit);
+    const energyKWh = e ? this.toKWh(e.value, this.data.energy!.unit) : null;
+
+    this.lastTempEl.textContent = this.fmt2(tempC);
+    if (energyKWh !== null) this.lastEnergyEl.textContent = this.fmt2(energyKWh);
+
+    this.currentTimeEl.textContent = t.time;
+    this.progressEl.textContent = `${this.pointer + 1} / ${this.data.temperature.values.length}`;
+    this.pushRecent('temp', t.time, tempC);
+    this.pushRecent('energy', t.time, energyKWh);
+    this.renderRecent();
+
+    const minuteKey = t.time.slice(0, 5);
+    const bucket = this.perMinute.get(minuteKey) || { t: [], e: [] };
+    bucket.t.push(tempC);
+    if (energyKWh !== null) bucket.e.push(energyKWh);
+    this.perMinute.set(minuteKey, bucket);
+
+    this.updateChart();
+  }
+
+  private revealNext() {
+    if (!this.data) return;
+    if (this.pointer >= this.data.temperature.values.length - 1) {
+      this.pause();
+      this.setStatus("Fin del dataset");
+      return;
+    }
+    this.pointer++;
+    this.revealCurrentOnly();
+  }
+
+  private setupChart() {
+    if (this.plot) { this.plot.destroy(); this.plot = null; }
+
+    const getW = () => {
+      const w = Math.floor(this.chartEl.getBoundingClientRect().width);
+      if (w && w > 0) return w;
+      const pw = this.chartEl.parentElement
+        ? Math.floor(this.chartEl.parentElement.getBoundingClientRect().width)
+        : 0;
+      return pw > 0 ? pw : 600;
+    };
+
+    const css = (v: string, fallback: string) =>
+      getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fallback;
+
+    const tempColor   = css("--c-temp",   "#7fb3ff");
+    const tempFill    = css("--c-temp-a", "rgba(127,179,255,.30)");
+    const energyColor = css("--c-energy", "#73e0c7");
+    const energyFill  = css("--c-energy-a","rgba(115,224,199,.30)");
+
+    const axisColor = css("--muted",  "rgba(190,205,255,.90)");
+    const gridColor = css("--border", "rgba(130,150,210,.25)");
+
+    const opts: uPlot.Options = {
+      title: "",
+      width: getW(),
+      height: 360,
+      pxAlign: 0.5,
+      scales: {
+        x: { time: false },
+        temp: { auto: true },
+        energy: { auto: true },
+      },
+      axes: [
+        {
+          stroke: axisColor,
+          grid: { show: true, stroke: gridColor },
+          values: (_u, vals) =>
+            (vals as number[]).map(v => this.xLabels[Math.round(v)] ?? ""),
+        },
+        { scale: "temp",   label: "°C",  stroke: axisColor, size: 48, gap: 6 },
+        { side: 1, scale: "energy", label: "kWh", stroke: axisColor, size: 56, gap: 6 },
+      ],
+      series: [
+        {},
+        {
+          label: "Temp (°C)",
+          scale: "temp",
+          points: { show: true, size: 5, stroke: tempColor,   fill: tempFill },
+          stroke: tempColor,
+          width: 2,
+        },
+        {
+          label: "Energía (kWh)",
+          scale: "energy",
+          points: { show: true, size: 5, stroke: energyColor, fill: energyFill },
+          stroke: energyColor,
+          width: 2,
+        },
+      ],
+      cursor: { drag: { x: false, y: false }, focus: { prox: 24 } },
+      legend: { show: false },
+    };
+
+    this.plot = new uPlot(opts, [[], [], []], this.chartEl);
+    this.refreshChartColors();
+
+    if (!this.resizeObs) {
+      this.resizeObs = new ResizeObserver(() => {
+        if (this.plot) this.plot.setSize({ width: getW(), height: 360 });
+      });
+      this.resizeObs.observe(this.chartEl);
+    }
+  }
+
+  private updateChart() {
+    if (!this.plot) this.setupChart();
+
+    const keys = Array.from(this.perMinute.keys()).sort();
+    this.xLabels = keys;
+    const x = keys.map((_, i) => i);
+
+    const tSeries = keys.map(k => this.mean(this.perMinute.get(k)!.t));
+    const eSeries = keys.map(k => this.mean(this.perMinute.get(k)!.e));
+
+    const tData = this.showTemp   ? tSeries : tSeries.map(() => null);
+    const eData = this.showEnergy ? eSeries : eSeries.map(() => null);
+
+    this.plot!.setData([x, tData, eData]);
+  }
+
+  private setStatus(msg: string) { this.statusEl.textContent = msg; }
+  private pushRecent(kind: 'temp' | 'energy', time: string, value: number | null) {
+    if (value === null || Number.isNaN(value)) return;
+    const arr = kind === 'temp' ? this.recentTemp : this.recentEnergy;
+    arr.unshift({ time, value });
+    if (arr.length > 5) arr.length = 5;
+  }
+  private renderRecent() {
+    if (!this.recentTempEl || !this.recentEnergyEl) return;
+    const tpl = (arr: { time: string; value: number }[], unit: string) =>
+      arr.map(e => `<li><span class="t">${e.time}</span><span class="v">${this.fmt2(e.value)} <span class="unit">${unit}</span></span></li>`).join("");
+    this.recentTempEl.innerHTML = tpl(this.recentTemp, "°C");
+    this.recentEnergyEl.innerHTML = tpl(this.recentEnergy, "kWh");
+  }
+  private toSeconds(t: string) { const [H,M,S] = t.split(":").map(Number); return H*3600 + M*60 + S; }
+  private toCelsius(value: number, unit?: string) {
+    const u = (unit || "").toLowerCase();
+    if (u === "dk") return value / 10 - 273.15;
+    if (u === "k")  return value - 273.15;
+    if (u.includes("c")) return value;
+    return value - 273.15;
+  }
+  private toKWh(value: number, unit?: string) {
+    const u = (unit || "").toLowerCase();
+    if (u === "kwh") return value;
+    if (u === "wh")  return value / 1000;
+    return value;
+  }
+  private mean(arr: number[] | undefined): number | null {
+    if (!arr || arr.length === 0) return null;
+    return arr.reduce((a,b)=>a+b,0)/arr.length;
+  }
+  private fmt2(n: number | null) {
+    if (n === null || Number.isNaN(n)) return "–";
+    return (Math.round(n * 100) / 100).toFixed(2);
+  }
+}
+
+customElements.define("meteo-dashboard", MeteoDashboard);

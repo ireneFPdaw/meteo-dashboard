@@ -1,0 +1,19 @@
+:root {
+    --bg: #0b1020;
+    --bg2: #0c1328;
+    --panel: #101a36;
+    --panel-2: #0e1834;
+    --border: rgba(130, 170, 255, 0.18);
+
+    --text: #e6ecff;
+    --muted: #a9b8ff;
+
+    /* Colores de series con mayor contraste */
+    --c-temp: #4dabf7; /* azul vivo */
+    --c-temp-a: rgba(77, 171, 247, 0.32);
+    --c-energy: #ffb74d; /* ámbar contrastado */
+    --c-energy-a: rgba(255, 183, 77, 0.32);
+
+    --ok: #34d399;
+    --warn: #ffd479;
+}

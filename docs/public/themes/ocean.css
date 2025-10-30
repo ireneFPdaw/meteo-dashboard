@@ -1,0 +1,24 @@
+:root {
+    /* Paleta clara (Ocean - Light) */
+    --bg: #f4fbff;
+    --bg2: #e8f5ff;
+    --panel: #ffffff;
+    --panel-2: #f6fbff;
+    --border: rgba(7, 89, 133, 0.18);
+
+    --text: #0f1f2d;
+    --muted: #365b74;
+
+    /* Series */
+    --c-temp: #1e88e5; /* azul temperatura */
+    --c-temp-a: rgba(30, 136, 229, 0.18);
+    --c-energy: #26a69a; /* verde-azulado energía */
+    --c-energy-a: rgba(38, 166, 154, 0.18);
+
+    --ok: #059669;
+    --warn: #b45309;
+}
+
+/* Mejora de contraste en tema claro */
+.status { color: var(--text); }
+.pill { color: var(--muted); }

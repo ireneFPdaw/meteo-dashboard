@@ -1,0 +1,18 @@
+:root {
+    --bg: #1a0f18;
+    --bg2: #20131e;
+    --panel: #241827;
+    --panel-2: #2b1d2f;
+    --border: rgba(255, 165, 150, 0.2);
+
+    --text: #ffeef7;
+    --muted: #ffc6d9;
+
+    --c-temp: #ff8fa3; /* rosa coral */
+    --c-temp-a: rgba(255, 143, 163, 0.3);
+    --c-energy: #ffd166; /* amarillo */
+    --c-energy-a: rgba(255, 209, 102, 0.3);
+
+    --ok: #a7f3d0;
+    --warn: #f4a261;
+}
