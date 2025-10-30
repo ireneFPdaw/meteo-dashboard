@@ -1,37 +1,28 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Panel Meteo‑Energía</title>
 
     <!-- uPlot CSS -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/uplot@1.6.30/dist/uPlot.min.css"
-    />
+    <link rel="stylesheet" href="https://unpkg.com/uplot@1.6.30/dist/uPlot.min.css">
 
     <!-- Estilos de la app  -->
-    <link rel="stylesheet" href="./styles/base.css" />
+    <link rel="stylesheet" href="./styles/base.css">
     <!-- Tema activo --Href se actualiza en runtime. -->
-    <link id="theme" rel="stylesheet" href="./themes/ocean.css" />
-  </head>
+    <link id="theme" rel="stylesheet" href="./themes/ocean.css">
+  <script defer src="main.js"></script></head>
 
   <body>
     <meteo-dashboard>
       <div class="wrap">
         <header>
           <div class="title">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <!-- Sol -->
               <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.5" />
-              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
               <!-- Rayo (energía) -->
               <path d="M13 7l-3 5h2l-1 5l4-6h-2l0-4z" fill="currentColor" />
             </svg>
@@ -45,46 +36,19 @@
 
             <!-- Combobox de tema (custom, accesible) -->
             <div class="dropdown" id="themeDropdown">
-              <button
-                id="btnTheme"
-                class="btn"
-                aria-haspopup="listbox"
-                aria-expanded="false"
-                aria-controls="themeMenu"
-                title="Cambiar tema"
-              >
+              <button id="btnTheme" class="btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="themeMenu" title="Cambiar tema">
                 <span id="themeCurrent" class="theme-current">Tema</span>
                 <span class="chevron" aria-hidden="true">▾</span>
               </button>
 
-              <div
-                id="themeMenu"
-                class="dropdown-menu"
-                role="listbox"
-                tabindex="-1"
-              >
-                <button
-                  class="dropdown-item"
-                  role="option"
-                  data-theme="dark"
-                  aria-selected="true"
-                >
+              <div id="themeMenu" class="dropdown-menu" role="listbox" tabindex="-1">
+                <button class="dropdown-item" role="option" data-theme="dark" aria-selected="true">
                   Oscuro
                 </button>
-                <button
-                  class="dropdown-item"
-                  role="option"
-                  data-theme="ocean"
-                  aria-selected="false"
-                >
+                <button class="dropdown-item" role="option" data-theme="ocean" aria-selected="false">
                   Claro
                 </button>
-                <button
-                  class="dropdown-item"
-                  role="option"
-                  data-theme="sunset"
-                  aria-selected="false"
-                >
+                <button class="dropdown-item" role="option" data-theme="sunset" aria-selected="false">
                   Sunset
                 </button>
               </div>
@@ -130,9 +94,7 @@
 
             <div class="meta">
               <span id="current-time" class="sr-only">—:—:—</span>
-              <span class="pill"
-                >Próx. actualización en <strong id="next-in">—</strong>s</span
-              >
+              <span class="pill">Próx. actualización en <strong id="next-in">—</strong>s</span>
             </div>
 
             <!-- Últimos cambios (temperatura y energía) -->
@@ -152,29 +114,17 @@
             <div class="chart-header">
               <div class="chart-title">Predicción (media por minuto)</div>
               <div class="legend chart-controls">
-                <button
-                  id="toggleTemp"
-                  aria-pressed="true"
-                  title="Ocultar temperatura"
-                >
+                <button id="toggleTemp" aria-pressed="true" title="Ocultar temperatura">
                   <span class="swatch temp"></span>
                   <span>Temp (°C)</span>
                 </button>
-                <button
-                  id="toggleEnergy"
-                  aria-pressed="true"
-                  title="Ocultar energía"
-                >
+                <button id="toggleEnergy" aria-pressed="true" title="Ocultar energía">
                   <span class="swatch energy"></span>
                   <span>Energía (kWh)</span>
                 </button>
               </div>
             </div>
-            <div
-              id="chart"
-              role="img"
-              aria-label="Gráfico de líneas: temperatura y energía por minuto"
-            ></div>
+            <div id="chart" role="img" aria-label="Gráfico de líneas: temperatura y energía por minuto"></div>
            
             <div class="help">
              
@@ -277,5 +227,6 @@
         });
       })();
     </script>
-  </body>
-</html>
+  
+
+</body></html>
