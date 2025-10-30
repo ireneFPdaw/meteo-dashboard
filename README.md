@@ -1,147 +1,137 @@
-# Visor Meteo‑Energético
+# Visor Meteo-Energético
 
-Aplicación web para visualizar, en tiempo real y de forma progresiva, predicciones **meteorológicas** (temperatura) y **energéticas** (energía producida) a partir de un archivo **YAML**. Incluye KPIs del último valor recibido, lista de últimos cambios, gráfico por **minuto** y selector de **tema**.
+Aplicación web para visualizar, en tiempo real y de forma progresiva, predicciones **meteorológicas** (temperatura) y **energéticas** (energía producida)** a partir de un archivo YAML.** Incluye KPIs del último valor recibido, lista de recientes, gráfico por minuto y selector de tema.
 
-> Tecnologías: **Web Components (Lit)**, **TypeScript**, **uPlot**, **js‑yaml**, **CSS variables** y **Rspack**.
+> Tecnologías: **Web Components (Lit)**, **TypeScript**, **uPlot**, **js-yaml**, **CSS variables** y **Rspack**.
 
 ---
 
 ## Características
 
-- **Reproducción progresiva** de los datos cada **5 s** (sin recargar).
-- **Sincronización a la hora actual** al iniciar.
-- **Gráfico** de temperatura (°C) y energía (kWh) con **media por minuto** y ejes Y independientes.
-- **Mostrar/ocultar series** desde la leyenda.
-- **Selector de tema** (claro, oscuro y sunset) sin recargar.
-- Accesible: roles ARIA, navegación por teclado y foco visible.
-- Conversión automática de **unidades**: `K`/`dK` → `°C`, `Wh` → `kWh`.
+  Actualización automática cada **5 segundos**
+  Sincronización con la hora real al iniciar
+  Gráfico con **media por minuto** (°C / kWh)
+  Mostrar/ocultar series desde la interfaz
+  **Temas**: Claro, Oscuro, Sunset (CSS variables)
+  Conversión de unidades: `K`/`dK` → `°C`, `Wh` → `kWh`
 
 ---
 
 ## Estructura del proyecto
 
+```txt
 public/
-  styles/base.css             # Layout y componentes (sin colores)
-  themes/{dark,ocean,sunset}.css # Variables de color (temas)
-  data.yml                    # Fuente de datos
-index.html                    # Shell + toolbar (selector de tema)
+ ├─ styles/base.css
+ ├─ themes/{dark,ocean,sunset}.css
+ ├─ data.yml
+index.html
 src/
-  lib/components/meteo-dashboard.ts  # Web Component principal
-  main.ts                             # Bootstrap del componente
+ ├─ lib/components/meteo-dashboard.ts
+ └─ main.ts
 rspack.config.js
 tsconfig.json
 package.json
+```
 
 ---
 
 ## Requisitos
 
-- **Node.js 18+**
-- Gestor de paquetes: recomendado **pnpm** (también funciona con `npm`/`yarn`).
+- Node.js **18+**
+- Gestor recomendado: **pnpm**
+  > También funciona con `npm` o `yarn`
 
 ---
 
-## Instalación y ejecución
+## Instalación y ejecución local
 
 ### 1) Instalar dependencias
 
 ```bash
-# con pnpm
 pnpm install
-
-# o con npm
+# o
 npm install
 ```
 
-### 2) Desarrollo
+### 2) Ejecutar en desarrollo
 
 ```bash
 pnpm dev
-# La consola indicará la URL (p.ej. http://localhost:5174)
 ```
 
-### 3) Build de producción
+### 3) Compilar para producción
 
 ```bash
-pnpm build           # genera /dist
-pnpm preview         # sirve la build para verificación local
+pnpm build
+pnpm preview
 ```
 
-> También puedes servir el `index.html` y la carpeta `public/` con cualquier servidor estático simple si lo prefieres.
+> También puede ejecutarse sirviendo `index.html` + `public/` en un servidor estático simple.
 
 ---
 
 ## Formato de `public/data.yml`
 
-La app admite tanto claves en inglés como en español y diferentes unidades:
-
 ```yml
 temperature: # o "temperatura"
-  unit: K # admite: C | K | dK
+  unit: K # C | K | dK
   values:
     - { time: "20:14:35", value: 295.75 }
     - { time: "20:14:40", value: 295.73 }
-    # ... (HH:MM:SS)
 
 energy: # o "energia" | "power" | "potencia"
-  unit: kWh # admite: kWh | Wh
+  unit: kWh # o Wh
   values:
     - { time: "20:14:35", value: 71.14 }
     - { time: "20:14:40", value: 71.13 }
 ```
 
-
-- Los arrays vienen **ordenados** por tiempo (`HH:MM:SS`). Si no lo estuvieran, la app los ordena.
-- Si `energy` no existe, la aplicación funciona sólo con temperatura.
-- Conversión de unidades:
-  - `K` → `°C = K − 273.15`
-  - `dK` → `°C = (dK / 10) − 273.15`
-  - `Wh` → `kWh = Wh / 1000`
+Ordenado por `HH:MM:SS`  
+Soporta faltas de energía (modo solo temperatura)  
+Conversión automática °C / kWh
 
 ---
 
-## Uso dentro de la UI
+## Uso en la interfaz
 
-- La barra superior muestra el **progreso** (dato actual/total) y el **selector de tema**.
-- En la izquierda:
-  - **KPIs** con último valor de Temperatura y Energía.
-  - **Cuenta atrás** hasta la próxima actualización (5 s).
-  - **Últimos 5 cambios** de cada serie.
-- A la derecha:
-  - **Gráfico** de medias por **minuto**.
-  - Botones para **mostrar/ocultar** cada serie.
-
-Atajos: **Barra espaciadora** pausa/reanuda la reproducción.
+- Barra superior → progreso + selección de tema
+- Lateral → KPI de temperatura y energía + últimos valores + contador
+- Panel principal → gráfico interactivo
+- **Barra espaciadora** → Pausar/Reanudar reproducción
 
 ---
 
 ## Temas
 
-Los colores se definen en `public/themes/*.css` como **variables CSS** (`--c-temp`, `--c-energy`, `--bg`, etc.). Cambiar el tema actualiza los colores del gráfico en caliente (sin recrear toda la vista).
+Definidos mediante variables CSS en:
+
+```
+public/themes/
+```
+
+Cambio en tiempo real sin recargar la página.
 
 ---
 
 ## Decisiones técnicas
 
-- **Lit + Web Components**: estándar nativo, ligero y portable a cualquier stack.
-- **uPlot**: librería de gráficos muy rápida y pequeña, ideal para líneas/puntos.
-- **js-yaml**: parseo robusto del YAML.
-- **TypeScript**: tipado de modelos y utilidades (SeriesPoint, conversión unidades).
-- **Rspack**: builder rápido (Rust), DX fluida en dev/build.
+- **Lit + Web Components** → ligero, portable, estándar web
+- **uPlot** → rendimiento óptimo en series grandes
+- **js-yaml** → lectura de YAML directa y segura
+- **TypeScript** → tipado fuerte y claridad
+- **Rspack** → bundler rápido y moderno
 
 ---
 
----
-
-## Scripts útiles
+## Scripts
 
 ```bash
-pnpm dev      # desarrollo con servidor local
-pnpm build    # build de producción (dist/)
-pnpm preview  # sirve dist/ para validar
+pnpm dev
+pnpm build
+pnpm preview
 ```
 
-Con `npm`:
+Con npm:
 
 ```bash
 npm run dev
@@ -153,12 +143,58 @@ npm run preview
 
 ## Solución de problemas
 
-- **No carga el YAML**: revisa la ruta `public/data.yml` y desactiva caché (la app usa `cache: "no-store"`).
-- **Gráfico vacío**: asegúrate de que hay datos con `time` en formato `HH:MM:SS`.
-- **Colores raros**: comprueba que el tema activo define `--c-temp`/`--c-energy` y que el `<link id="theme">` apunta al CSS correcto.
+| Problema         | Solución                               |
+| ---------------- | -------------------------------------- |
+| No carga el YAML | Verificar ruta relativa `./data.yml`   |
+| Gráfico vacío    | Asegurar formato `HH:MM:SS` en tiempos |
+| Tema no cambia   | Comprobar `link#theme` y variables CSS |
+
+---
+
+## Despliegue en GitHub Pages
+
+🔗 **Demo online:**  
+https://irenefpdaw.github.io/meteo-dashboard/
+
+### Pasos realizados
+
+1. Crear carpeta `docs/` y copiar dentro:
+   ```
+   index.html
+   data.yml
+   styles/
+   themes/
+   ```
+2. Inicializar Git y primer commit:
+   ```bash
+   git init
+   git add .
+   git commit -m "Publicación GitHub Pages"
+   ```
+3. Conectar repo y subir:
+   ```bash
+   git remote add origin https://github.com/ireneFPdaw/meteo-dashboard.git
+   git branch -M main
+   git push -u origin main
+   ```
+4. Activar Pages:
+   - Settings → Pages
+   - Source: _Deploy from a branch_
+   - Branch: `main`
+   - Folder: `/docs`
+
+El sitio queda publicado automáticamente.
+
+Actualización futura:
+
+```bash
+git add .
+git commit -m "Update"
+git push
+```
 
 ---
 
 ## Licencia
 
-MIT — usa, modifica y comparte libremente.
+**MIT** — libre uso y modificación
