@@ -8,12 +8,12 @@ Aplicación web para visualizar, en tiempo real y de forma progresiva, prediccio
 
 ## Características
 
-  Actualización automática cada **5 segundos**
-  Sincronización con la hora real al iniciar
-  Gráfico con **media por minuto** (°C / kWh)
-  Mostrar/ocultar series desde la interfaz
-  **Temas**: Claro, Oscuro, Sunset (CSS variables)
-  Conversión de unidades: `K`/`dK` → `°C`, `Wh` → `kWh`
+ - Actualización automática cada **5 segundos**
+ - Sincronización con la hora real al iniciar
+ - Gráfico con **media por minuto** (°C / kWh)
+ - Mostrar/ocultar series desde la interfaz
+ -  **Temas**: Claro, Oscuro, Sunset (CSS variables)
+ - Conversión de unidades: `K`/`dK` → `°C`, `Wh` → `kWh`
 
 ---
 
